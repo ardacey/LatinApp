@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Latince Öğrenme Platformu — Proje Raporu</title>
+  <style>
+    /* ── Temel Ayarlar ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --stone-50:  #fafaf9;
+      --stone-100: #f5f5f4;
+      --stone-200: #e7e5e4;
+      --stone-300: #d6d3d1;
+      --stone-500: #78716c;
+      --stone-600: #57534e;
+      --stone-700: #44403c;
+      --stone-800: #292524;
+      --amber-600: #d97706;
+      --amber-100: #fef3c7;
+      --blue-700:  #1d4ed8;
+      --red-700:   #b91c1c;
+      --green-700: #15803d;
+    }
+
+    body {
+      font-family: "Georgia", "Times New Roman", serif;
+      font-size: 11pt;
+      line-height: 1.7;
+      color: #292524;
+      background: white;
+      max-width: 850px;
+      margin: 0 auto;
+      padding: 40px 60px;
+    }
+
+    /* ── Baskı Stillleri ── */
+    @media print {
+      body { padding: 0; max-width: 100%; font-size: 10.5pt; }
+      .no-print { display: none !important; }
+      .page-break { page-break-before: always; }
+      .avoid-break { page-break-inside: avoid; }
+      a { color: inherit; text-decoration: none; }
+      .cover { min-height: 100vh; }
+    }
+
+    /* ── Tipografi ── */
+    h1 { font-size: 26pt; font-weight: 700; letter-spacing: -0.5px; }
+    h2 { font-size: 15pt; font-weight: 700; margin-top: 2.2em; margin-bottom: 0.6em; color: var(--stone-800); border-bottom: 2px solid var(--stone-200); padding-bottom: 6px; }
+    h3 { font-size: 11.5pt; font-weight: 700; margin-top: 1.4em; margin-bottom: 0.4em; color: var(--stone-700); }
+    p  { margin-bottom: 0.8em; }
+    ul, ol { margin: 0.6em 0 0.8em 1.8em; }
+    li { margin-bottom: 0.25em; }
+    strong { font-weight: 700; }
+    em { font-style: italic; }
+    code {
+      font-family: "Courier New", monospace;
+      font-size: 9.5pt;
+      background: var(--stone-100);
+      border: 1px solid var(--stone-200);
+      padding: 0 4px;
+      border-radius: 3px;
+    }
+
+    /* ── Kapak ── */
+    .cover {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 92vh;
+      padding: 60px 0;
+    }
+    .cover-logo {
+      font-size: 40pt;
+      margin-bottom: 12px;
+    }
+    .cover-title { margin-bottom: 8px; }
+    .cover-subtitle {
+      font-size: 14pt;
+      color: var(--stone-500);
+      font-style: italic;
+      margin-bottom: 40px;
+    }
+    .cover-badge {
+      display: inline-block;
+      background: var(--amber-100);
+      color: var(--amber-600);
+      border: 1px solid #fde68a;
+      border-radius: 6px;
+      padding: 4px 12px;
+      font-size: 9pt;
+      font-family: sans-serif;
+      font-weight: 600;
+      margin-right: 8px;
+      margin-bottom: 6px;
+    }
+    .cover-meta {
+      color: var(--stone-500);
+      font-size: 10pt;
+      font-family: sans-serif;
+    }
+    .cover-meta table { border-collapse: collapse; }
+    .cover-meta td { padding: 2px 16px 2px 0; vertical-align: top; }
+
+    /* ── İçindekiler ── */
+    .toc { list-style: none; margin: 0; padding: 0; }
+    .toc li { display: flex; justify-content: space-between; border-bottom: 1px dotted var(--stone-300); padding: 4px 0; font-family: sans-serif; font-size: 10.5pt; }
+    .toc .toc-sub { padding-left: 20px; font-size: 10pt; color: var(--stone-600); }
+    .toc-num { color: var(--stone-400); font-size: 9.5pt; }
+
+    /* ── Vurgular ve Kutular ── */
+    .callout {
+      background: var(--stone-100);
+      border-left: 4px solid var(--stone-300);
+      padding: 12px 16px;
+      border-radius: 0 6px 6px 0;
+      margin: 1em 0;
+      font-size: 10.5pt;
+    }
+    .callout.highlight {
+      background: var(--amber-100);
+      border-color: #fbbf24;
+    }
+    .callout-title {
+      font-weight: 700;
+      font-family: sans-serif;
+      font-size: 9.5pt;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+      color: var(--stone-600);
+    }
+
+    /* ── Tablo ── */
+    table.data {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: sans-serif;
+      font-size: 10pt;
+      margin: 0.8em 0;
+    }
+    table.data th {
+      background: var(--stone-800);
+      color: white;
+      padding: 7px 12px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 9.5pt;
+    }
+    table.data td {
+      padding: 6px 12px;
+      border-bottom: 1px solid var(--stone-200);
+      vertical-align: top;
+    }
+    table.data tr:nth-child(even) { background: var(--stone-50); }
+    table.data .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+    /* ── İstatistik Kutuları ── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin: 1em 0;
+    }
+    .stat-box {
+      background: var(--stone-100);
+      border: 1px solid var(--stone-200);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-family: sans-serif;
+    }
+    .stat-num { font-size: 18pt; font-weight: 800; color: var(--stone-800); }
+    .stat-label { font-size: 8.5pt; color: var(--stone-500); margin-top: 2px; }
+
+    /* ── Akış Diyagramı (metin tabanlı) ── */
+    .flow {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0;
+      margin: 1em 0;
+      font-family: sans-serif;
+      font-size: 9.5pt;
+    }
+    .flow-step {
+      background: var(--stone-800);
+      color: white;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .flow-arrow {
+      color: var(--stone-400);
+      padding: 0 6px;
+      font-size: 14pt;
+    }
+
+    /* ── Baskı Düğmesi ── */
+    .print-btn {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--stone-800);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 11pt;
+      cursor: pointer;
+      font-family: sans-serif;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .print-btn:hover { background: var(--stone-700); }
+
+    /* ── Satır içi sans bölümler ── */
+    .sans { font-family: sans-serif; }
+    .muted { color: var(--stone-500); }
+    .small { font-size: 9.5pt; }
+  </style>
+</head>
+<body>
+
+<!-- ══ KAPAK ══════════════════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div>
+    <div class="cover-logo">🏛️</div>
+    <h1 class="cover-title">Latince Öğrenme Platformu</h1>
+    <p class="cover-subtitle">Proje Tasarım ve Vizyon Raporu</p>
+
+    <div style="margin-bottom: 20px;">
+      <span class="cover-badge">Ön Prototip</span>
+      <span class="cover-badge">Mart 2026</span>
+      <span class="cover-badge">v0.9 — Demo</span>
+    </div>
+  </div>
+
+  <div class="cover-meta">
+    <table>
+      <tr>
+        <td><strong>Proje Türü</strong></td>
+        <td>Eğitim teknolojisi — dijital dil öğrenme platformu</td>
+      </tr>
+      <tr>
+        <td><strong>Hedef Kitle</strong></td>
+        <td>Latince öğrenen Türk üniversite öğrencileri ve araştırmacılar</td>
+      </tr>
+      <tr>
+        <td><strong>Mevcut Durum</strong></td>
+        <td>Veri tabanı hazır · Web prototipi çalışıyor · Mobil uygulama planlanıyor</td>
+      </tr>
+      <tr>
+        <td><strong>Veri Tabanı</strong></td>
+        <td>32.632 sözlük maddesi · 554.764 çekim formu · 699 örnek cümle</td>
+      </tr>
+      <tr>
+        <td><strong>Tarih</strong></td>
+        <td>Mart 2026</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- ══ İÇİNDEKİLER ═══════════════════════════════════════════════════════════ -->
+<div class="page-break avoid-break">
+  <h2 style="margin-top: 0;">İçindekiler</h2>
+  <ul class="toc">
+    <li><span>1. Yönetici Özeti</span><span class="toc-num">3</span></li>
+    <li class="toc-sub"><span>1.1. Projenin Önemi</span><span class="toc-num">3</span></li>
+    <li><span>2. Motivasyon ve Problem Tanımı</span><span class="toc-num">3</span></li>
+    <li class="toc-sub"><span>2.1. Mevcut Kaynakların Yetersizliği</span><span class="toc-num">3</span></li>
+    <li class="toc-sub"><span>2.2. Türkçe İçerik Boşluğu</span><span class="toc-num">4</span></li>
+    <li><span>3. Proje Amacı</span><span class="toc-num">4</span></li>
+    <li><span>4. Vizyon</span><span class="toc-num">5</span></li>
+    <li><span>5. Proje Kapsamı</span><span class="toc-num">5</span></li>
+    <li><span>6. Veri Seti</span><span class="toc-num">6</span></li>
+    <li class="toc-sub"><span>6.1. Kaynak ve Metodoloji</span><span class="toc-num">6</span></li>
+    <li class="toc-sub"><span>6.2. Veri Kalitesi ve Zenginleştirme</span><span class="toc-num">7</span></li>
+    <li class="toc-sub"><span>6.3. Veri Tabanı İstatistikleri</span><span class="toc-num">7</span></li>
+    <li><span>7. Teknoloji Yığını</span><span class="toc-num">8</span></li>
+    <li><span>8. Sistem Mimarisi</span><span class="toc-num">8</span></li>
+    <li class="toc-sub"><span>8.1. Veri İşleme Hattı</span><span class="toc-num">8</span></li>
+    <li class="toc-sub"><span>8.2. Web Platformu</span><span class="toc-num">9</span></li>
+    <li><span>9. Mevcut Özellikler</span><span class="toc-num">9</span></li>
+    <li><span>10. Pedagojik Çerçeve</span><span class="toc-num">10</span></li>
+    <li><span>11. Gelecek Planları — Mobil Uygulama</span><span class="toc-num">11</span></li>
+    <li><span>12. Akademik Katkı Potansiyeli</span><span class="toc-num">12</span></li>
+    <li><span>13. Sonuç</span><span class="toc-num">13</span></li>
+  </ul>
+</div>
+
+<!-- ══ BÖLÜM 1: YÖNETİCİ ÖZETİ ══════════════════════════════════════════════ -->
+<div class="page-break">
+  <h2>1. Yönetici Özeti</h2>
+
+  <p>Bu rapor, Türkiye'deki Latince öğrencileri ve araştırmacıları için geliştirilmekte olan dijital bir dil öğrenme platformunu tanıtmaktadır. Platform; kapsamlı bir Latince–Türkçe–İngilizce sözlük, otomatik çekim tabloları, interaktif alıştırmalar ve metin analizi modülünden oluşmaktadır.</p>
+
+  <p>Proje iki temel bileşenden oluşmaktadır: (1) <strong>Veri Tabanı</strong> — Wiktionary'den sistemli biçimde derlenerek makine öğrenimi destekli yöntemlerle zenginleştirilmiş 32.632 sözlük maddesi ve 554.764 çekim formu; (2) <strong>Dijital Platform</strong> — bu veri tabanını öğrencilere sunan, alıştırmalar ve metin analizi içeren web ve mobil uygulama.</p>
+
+  <div class="callout highlight">
+    <div class="callout-title">Temel Başarı Göstergesi</div>
+    Türkçe dilinde, otomatik çekim tabloları içeren, bu ölçekte bir Latince dijital sözlük bugüne kadar kamuoyuna sunulmamıştır. Platform bu boşluğu doldurmayı hedeflemektedir.
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-box">
+      <div class="stat-num">32.632</div>
+      <div class="stat-label">Sözlük maddesi</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">554.764</div>
+      <div class="stat-label">Çekim formu</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">5</div>
+      <div class="stat-label">Platform modülü</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-num">%100</div>
+      <div class="stat-label">Türkçe çeviri hedefi</div>
+    </div>
+  </div>
+
+  <h3>1.1. Projenin Önemi</h3>
+  <p>Latince, antik Roma edebiyatının, hukukunun, tıbbının ve biliminin temel dilidir. Bugün Türkiye'deki üniversitelerde Latince eğitimi verilmesine karşın, öğrencilerin kullanabileceği kapsamlı Türkçe kaynak sayısı son derece kısıtlıdır. Mevcut basılı sözlükler güncel dijital araçlardan yoksundur; yurt dışı kaynaklar (Lewis &amp; Short, Wiktionary) ise Türkçe çeviri sunmamaktadır. Bu platform, söz konusu eksikliği gidermek amacıyla tasarlanmıştır.</p>
+</div>
+
+<!-- ══ BÖLÜM 2: MOTİVASYON ═══════════════════════════════════════════════════ -->
+<div class="page-break">
+  <h2>2. Motivasyon ve Problem Tanımı</h2>
+
+  <h3>2.1. Mevcut Kaynakların Yetersizliği</h3>
+
+  <p>Günümüzde Latince öğrenenler için mevcut kaynaklar şu sınırlamalara sahiptir:</p>
+
+  <table class="data avoid-break">
+    <thead>
+      <tr>
+        <th>Kaynak</th>
+        <th>Türkçe Çeviri</th>
+        <th>Çekim Tabloları</th>
+        <th>Dijital Erişim</th>
+        <th>İnteraktif Alıştırma</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Lewis &amp; Short (1879)</td>
+        <td>❌ Yok</td>
+        <td>❌ Yok</td>
+        <td>⚠️ Kısıtlı</td>
+        <td>❌ Yok</td>
+      </tr>
+      <tr>
+        <td>Wiktionary</td>
+        <td>❌ Yok</td>
+        <td>✅ Var</td>
+        <td>✅ Ücretsiz</td>
+        <td>❌ Yok</td>
+      </tr>
+      <tr>
+        <td>Perseus Digital Library</td>
+        <td>❌ Yok</td>
+        <td>⚠️ Kısıtlı</td>
+        <td>✅ Var</td>
+        <td>❌ Yok</td>
+      </tr>
+      <tr>
+        <td>Duolingo Latin</td>
+        <td>❌ Yok (TR)</td>
+        <td>❌ Yok</td>
+        <td>✅ Var</td>
+        <td>✅ Var</td>
+      </tr>
+      <tr>
+        <td>Türkçe basılı sözlükler</td>
+        <td>✅ Var</td>
+        <td>❌ Yok</td>
+        <td>❌ Yok</td>
+        <td>❌ Yok</td>
+      </tr>
+      <tr style="background: #fef3c7; font-weight: 600;">
+        <td>Bu Platform</td>
+        <td>✅ Var</td>
+        <td>✅ Tam</td>
+        <td>✅ Var</td>
+        <td>✅ Var</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>2.2. Türkçe İçerik Boşluğu</h3>
+
+  <p>Mevcut Latince dijital araçların tamamı İngilizce veya Almanca odaklıdır. Türkçe konuşan öğrenciler için şu durum söz konusudur:</p>
+  <ul>
+    <li>Kapsamlı Türkçe Latince sözlük yalnızca basılı formda mevcuttur ve pahalıdır</li>
+    <li>Türkçe arayüzlü hiçbir Latince öğrenme uygulaması bulunmamaktadır</li>
+    <li>Çekim tablolarını gösteren Türkçe kaynak yoktur</li>
+    <li>Latince metinlerin Türkçe annotasyonlu okuyucusu bulunmamaktadır</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">Pazar Boşluğu</div>
+    Türkiye'de her yıl onlarca üniversitede yüzlerce öğrenci Latince dersi almaktadır. Bu öğrencilerin tamamı şu an için yetersiz dijital araçlarla çalışmak zorundadır.
+  </div>
+</div>
+
+<!-- ══ BÖLÜM 3: AMAÇ ═══════════════════════════════════════════════════════════ -->
+<h2>3. Proje Amacı</h2>
+
+<p>Bu projenin temel amacı, Türkçe konuşan Latince öğrencilerine yönelik, bilimsel temelli ve modern pedagojik ilkeler çerçevesinde tasarlanmış dijital bir öğrenme ekosistemi oluşturmaktır. Bu amaç doğrultusunda hedeflenenler şunlardır:</p>
+
+<ol>
+  <li><strong>Kapsamlı sözlük:</strong> 32.000+ sözlük maddesini, Türkçe çevirilerini ve tam çekim tablolarını tek bir dijital platformda sunmak</li>
+  <li><strong>Aktif öğrenme desteği:</strong> Kelime ezberini pekiştiren interaktif alıştırmalar sağlamak</li>
+  <li><strong>Metin analizi:</strong> Öğrencilerin özgün Latince metinleri kelime kelime anlayabilmesini sağlamak</li>
+  <li><strong>Erişilebilirlik:</strong> Platformu ücretsiz, kesintisiz ve mobil uyumlu sunmak</li>
+  <li><strong>Akademik destek:</strong> Araştırmacılar için veri tabanını API aracılığıyla erişilebilir kılmak</li>
+</ol>
+
+<!-- ══ BÖLÜM 4: VİZYON ════════════════════════════════════════════════════════ -->
+<div class="page-break">
+  <h2>4. Vizyon</h2>
+
+  <p>Platformun uzun vadeli vizyonu şu cümleyle özetlenebilir:</p>
+
+  <div class="callout highlight" style="font-size: 13pt; font-style: italic; text-align: center; padding: 20px;">
+    Türkiye'deki her Latince öğrencisinin cebinde taşıdığı, her metin okurken başvurduğu ve her gün biraz daha gelişen akıllı bir Latince öğretmeni.
+  </div>
+
+  <p>Bu vizyona ulaşmak için platform üç aşamada geliştirilmektedir:</p>
+
+  <table class="data avoid-break">
+    <thead>
+      <tr><th>Aşama</th><th>Kapsam</th><th>Durum</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Faz 1 — Temel</strong></td>
+        <td>Sözlük, çekim tabloları, arama, alıştırmalar, metin analizi (web)</td>
+        <td>✅ Tamamlandı (prototip)</td>
+      </tr>
+      <tr>
+        <td><strong>Faz 2 — Kişiselleştirme</strong></td>
+        <td>Kullanıcı hesapları, öğrenme geçmişi, adaptif tekrar sistemi, mobil uygulama</td>
+        <td>🔄 Planlanıyor</td>
+      </tr>
+      <tr>
+        <td><strong>Faz 3 — Topluluk</strong></td>
+        <td>Öğretmen paneli, sınıf yönetimi, Latince metin kütüphanesi, sosyal özellikler</td>
+        <td>📋 Tasarım aşamasında</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══ BÖLÜM 5: KAPSAM ════════════════════════════════════════════════════════ -->
+<h2>5. Proje Kapsamı</h2>
+
+<h3>5.1. Kapsam Dahilindekiler</h3>
+<ul>
+  <li>Latince sözlük veritabanı (isimler, fiiller, sıfatlar, zarflar, edatlar, bağlaçlar, zamirler, sayılar)</li>
+  <li>Tam çekim tabloları: isim (5 deklinasyon × 6 kasus × sg/pl), fiil (4 konjugasyon, zamanlar, kipler, çatılar), sıfat</li>
+  <li>Türkçe ve İngilizce çeviriler</li>
+  <li>Makron (uzun hece işareti) desteği: <em>ā, ē, ī, ō, ū</em></li>
+  <li>İnteraktif alıştırmalar: kelime testi, çekim testi</li>
+  <li>Latince metin analizi (tüm çekim formlarından lemma'ya yönlendirme)</li>
+  <li>REST API (Supabase aracılığıyla)</li>
+</ul>
+
+<h3>5.2. Kapsam Dışındakiler (Şimdilik)</h3>
+<ul>
+  <li>Orta ve İlkçağ Latincesi (proje Klasik Latince'ye odaklanmaktadır)</li>
+  <li>Ses ve telaffuz rehberi (Faz 2'de eklenecek)</li>
+  <li>Kullanıcı hesabı ve ilerleme takibi (Faz 2'de eklenecek)</li>
+  <li>Latince yazma/kompozisyon araçları</li>
+  <li>Otomatik çeviri (makine çevirisi destekli metin çevirisi)</li>
+</ul>
+
+<!-- ══ BÖLÜM 6: VERİ SETİ ════════════════════════════════════════════════════ -->
+<div class="page-break">
+  <h2>6. Veri Seti</h2>
+
+  <h3>6.1. Kaynak ve Metodoloji</h3>
+
+  <p>Platformun veri tabanı, Wiktionary'deki tüm Latince lemma'ların sistematik biçimde işlenmesiyle oluşturulmuştur. Wiktionary, akademik açıdan güvenilir, tüm dünyada dilbilimciler tarafından katkıda bulunulan ve açık lisanslı en kapsamlı çok dilli sözlüktür.</p>
+
+  <p>Veri derleme süreci şu aşamalardan oluşmaktadır:</p>
+
+  <div class="flow">
+    <span class="flow-step">Wiktionary Dump</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">Wikitext Ayrıştırma</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">Kelime Zenginleştirme</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">Çekim Üretimi</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">PostgreSQL</span>
+    <span class="flow-arrow">→</span>
+    <span class="flow-step">Web/Mobil API</span>
+  </div>
+
+  <p>Her aşama Python betikleriyle tamamen otomatikleştirilmiştir. Bu mimari, gelecekte yeni veriler eklendiğinde veya mevcut veriler güncellenmesi gerektiğinde tüm veri tabanının birkaç saat içinde yeniden oluşturulmasını mümkün kılmaktadır.</p>
+
+  <h3>6.2. Veri Kalitesi ve Zenginleştirme</h3>
+
+  <p>Ham Wiktionary verisi birçok aşamada zenginleştirilmekte ve doğrulanmaktadır:</p>
+
+  <ul>
+    <li><strong>Genitif tahmini:</strong> 1., 2., 4. ve 5. deklinasyona ait isimler için nominativustan genitif otomatik türetilmektedir (%100 doğruluk için tahmin edilemeyen formlar (3. deklinasyon) hariç tutulmaktadır)</li>
+    <li><strong>Frekans sıralaması:</strong> Kelimeler tarihsel kullanım sıklığına göre sıralanarak daha önce sık kullanılan kelimeler gösterilmektedir</li>
+    <li><strong>Çekim formu normalleştirme:</strong> Makronlu ve makronsuz formlar eşleştirilerek arama kolaylaştırılmaktadır</li>
+    <li><strong>Türkçe çeviri kontrolü:</strong> Otomatik kalite kontrol döngüleri eksik veya şüpheli çevirileri tespit etmektedir</li>
+  </ul>
+
+  <div class="callout">
+    <div class="callout-title">Genitive Tamamlama — Örnek Kural Seti</div>
+    <code>1. Deklinasyon: -a → -ae &nbsp;(rosa → rosae)</code><br/>
+    <code>2. Deklinasyon: -us → -ī &nbsp;(dominus → dominī)</code><br/>
+    <code>4. Deklinasyon: -us → -ūs &nbsp;(fructus → fructūs)</code><br/>
+    <code>5. Deklinasyon: -ēs → -ēī &nbsp;(res → reī)</code>
+  </div>
+
+  <h3>6.3. Veri Tabanı İstatistikleri</h3>
+
+  <table class="data avoid-break">
+    <thead>
+      <tr><th>Tablo</th><th>Açıklama</th><th class="num">Satır Sayısı</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>words</code></td>
+        <td>Ana sözlük — lemma, çeviri, deklinasyon/konjugasyon, cinsiyet</td>
+        <td class="num">32.632</td>
+      </tr>
+      <tr>
+        <td><code>noun_forms</code></td>
+        <td>İsim çekimleri — kasus, tekil/çoğul, cinsiyet</td>
+        <td class="num">112.284</td>
+      </tr>
+      <tr>
+        <td><code>verb_forms</code></td>
+        <td>Fiil çekimleri — zaman, kip, çatı, şahıs</td>
+        <td class="num">112.784</td>
+      </tr>
+      <tr>
+        <td><code>adjective_forms</code></td>
+        <td>Sıfat çekimleri — kasus, cinsiyet, tekil/çoğul</td>
+        <td class="num">328.896</td>
+      </tr>
+      <tr>
+        <td><code>examples</code></td>
+        <td>Örnek cümleler — Latince, İngilizce, Türkçe</td>
+        <td class="num">699</td>
+      </tr>
+      <tr style="font-weight: 700; background: var(--amber-100);">
+        <td colspan="2">Toplam</td>
+        <td class="num">587.295</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>Sözlük maddelerinin sözcük türü dağılımı:</p>
+
+  <table class="data avoid-break">
+    <thead>
+      <tr><th>Sözcük Türü</th><th class="num">Adet</th><th class="num">Oran</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Sıfat (<em>adjective</em>)</td><td class="num">14.462</td><td class="num">%44,3</td></tr>
+      <tr><td>İsim (<em>noun</em>)</td><td class="num">14.744</td><td class="num">%45,2</td></tr>
+      <tr><td>Fiil (<em>verb</em>)</td><td class="num">2.064</td><td class="num">%6,3</td></tr>
+      <tr><td>Zarf (<em>adverb</em>)</td><td class="num">596</td><td class="num">%1,8</td></tr>
+      <tr><td>Diğer (edat, bağlaç, zamir…)</td><td class="num">766</td><td class="num">%2,4</td></tr>
+      <tr style="font-weight: 700;"><td>Toplam</td><td class="num">32.632</td><td class="num">%100</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══ BÖLÜM 7: TEKNOLOJİ YIĞINI ════════════════════════════════════════════ -->
+<div class="page-break">
+  <h2>7. Teknoloji Yığını</h2>
+
+  <table class="data avoid-break">
+    <thead>
+      <tr><th>Katman</th><th>Teknoloji</th><th>Tercih Gerekçesi</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Veri İşleme</strong></td>
+        <td>Python 3.13</td>
+        <td>Wikitext ayrıştırma, regex, zenginleştirme, toplu içe aktarma</td>
+      </tr>
+      <tr>
+        <td><strong>Veri Tabanı</strong></td>
+        <td>PostgreSQL (Supabase)</td>
+        <td>Güçlü ilişkisel yapı; UUID PK; tam metin arama (ILIKE/pg_trgm); yönetilen bulut altyapısı</td>
+      </tr>
+      <tr>
+        <td><strong>Backend API</strong></td>
+        <td>Supabase REST / PostgREST</td>
+        <td>Sıfır ek sunucu; otomatik REST endpoint; gerçek zamanlı abonelik; Row-Level Security</td>
+      </tr>
+      <tr>
+        <td><strong>Web Frontend</strong></td>
+        <td>Next.js 14 (App Router)<br/>React 18, TypeScript</td>
+        <td>SSR + CSR hibriti; dosya-tabanlı yönlendirme; Vercel dağıtımına hazır; tip güvenliği</td>
+      </tr>
+      <tr>
+        <td><strong>Stil</strong></td>
+        <td>Tailwind CSS</td>
+        <td>Hızlı prototipleme; tutarlı tasarım sistemi; minimal CSS çıktısı</td>
+      </tr>
+      <tr>
+        <td><strong>Mobil (Planlanan)</strong></td>
+        <td>React Native + Expo</td>
+        <td>Web kodu paylaşımı; iOS + Android tek kod tabanı; Expo Go ile hızlı test</td>
+      </tr>
+      <tr>
+        <td><strong>Dağıtım</strong></td>
+        <td>Vercel (web) + Supabase (DB)</td>
+        <td>Ücretsiz başlangıç katmanları; CDN; otomatik HTTPS; git tabanlı CI/CD</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <div class="callout-title">Maliyet Analizi</div>
+    Mevcut prototip aşamasında tüm altyapı <strong>ücretsiz</strong> katmanlarda çalışmaktadır. Supabase ücretsiz katman 500 MB depolama ve 50.000 aylık aktif kullanıcıya kadar desteklemektedir. Ölçekleme ihtiyacı doğduğunda aylık ~25$ maliyet öngörülmektedir.
+  </div>
+</div>
+
+<!-- ══ BÖLÜM 8: MİMARİ ════════════════════════════════════════════════════════ -->
+<h2>8. Sistem Mimarisi</h2>
+
+<h3>8.1. Veri İşleme Hattı</h3>
+
+<p>Veri işleme hattı tamamen otonom çalışan Python bileşenlerinden oluşmaktadır:</p>
+
+<ul>
+  <li><code>scraper.py</code> — Wiktionary API'sinden tüm Latince lemma'ların wikitext içeriğini indirir</li>
+  <li><code>parser.py</code> — Wikitext sözdizimini ayrıştırarak yapılandırılmış veriye (JSON) dönüştürür; sözcük türü, çeviri, deklinasyon/konjugasyon sınıfı, cinsiyet bilgilerini çıkarır</li>
+  <li><code>processor.py</code> — Ham veriyi zenginleştirir: eksik genitif tahminleri, frekans skorlaması, veri normalleştirme</li>
+  <li><code>exporter.py</code> — Zenginleştirilmiş veriyi Supabase'e uygun JSON parçalarına ayırır (<code>sb_words.json</code>, <code>sb_noun_forms.json</code>, vb.)</li>
+  <li><code>importer.py</code> — JSON dosyalarını Supabase REST API'si üzerinden toplu yükler</li>
+</ul>
+
+<h3>8.2. Web Platformu</h3>
+
+<p>Web uygulaması Next.js App Router mimarisiyle yapılandırılmıştır:</p>
+
+<ul>
+  <li><code>/</code> — Arama arayüzü, POS filtresi, sayfalı kelime listesi</li>
+  <li><code>/word/[id]</code> — Kelime detay sayfası: çekim tabloları, örnek cümleler</li>
+  <li><code>/exercises</code> — Kelime testi, çekim testi, gelecek alıştırma modülleri</li>
+  <li><code>/analyze</code> — Latince metin analizi: 4 paralel sorguyla lemma ve çekim formu eşleştirme</li>
+  <li><code>/stats</code> — Veri tabanı istatistikleri ve platform durum göstergeleri</li>
+</ul>
+
+<p>Metin analizi modülü, kullanıcının girdiği Latince metni kelimelere ayırarak aynı anda dört tablo üzerinde sorgu çalıştırır: doğrudan lemma eşleşmesi (<code>words.latin</code>), isim formu (<code>noun_forms.form</code>), fiil formu (<code>verb_forms.form</code>) ve sıfat formu (<code>adjective_forms.form</code>). Sonuçlar renk kodlu ve interaktif biçimde gösterilmektedir.</p>
+</div>
+
+<!-- ══ BÖLÜM 9: MEVCUT ÖZELLİKLER ══════════════════════════════════════════ -->
+<div class="page-break">
+  <h2>9. Mevcut Özellikler</h2>
+
+  <h3>9.1. Sözlük ve Arama</h3>
+  <ul>
+    <li>Latince, Türkçe veya İngilizce'de eş zamanlı arama (<code>ILIKE</code>)</li>
+    <li>Sözcük türüne göre filtreleme (isim, fiil, sıfat, vb.)</li>
+    <li>Sıklık sıralaması — en çok kullanılan kelimeler üstte</li>
+    <li>Sayfalama (sayfa başı 20 kelime)</li>
+    <li>Her kelime kartında sözcük türü renk rozeti</li>
+  </ul>
+
+  <h3>9.2. Kelime Detay Sayfası</h3>
+  <ul>
+    <li>Tam çekim tablosu: isimler için 6 kasus × 2 sayı; fiiller için tam paradigma</li>
+    <li>Cinsiyet, deklinasyon/konjugasyon sınıfı göstergesi</li>
+    <li>Türkçe ve İngilizce çeviri</li>
+    <li>Örnek cümleler (varsa) — Latince orijinal + Türkçe çeviri</li>
+  </ul>
+
+  <h3>9.3. Alıştırmalar</h3>
+  <ul>
+    <li><strong>Kelime Testi:</strong> Türkçe anlam gösterilir; 4 Latince seçenek arasından doğrusu işaretlenir. Anlık geri bildirim + seri skoru</li>
+    <li><strong>Çekim Testi:</strong> Nominativus formu gösterilir; 4 genitiv seçeneği arasından doğrusu bulunur</li>
+    <li>Her testte farklı kelimeler — veri tabanından rastgele çekilir</li>
+    <li>Gelecek alıştırma modülleri görsel olarak gösterilmektedir (boşluk doldurma, yazım, telaffuz, adaptif tekrar)</li>
+  </ul>
+
+  <h3>9.4. Metin Analizi</h3>
+  <ul>
+    <li>Serbest Latince metin girişi veya hazır metin seçimi (Caesar, Cicero, Vergilius)</li>
+    <li>Kelimelerin sözcük türüne göre renk kodlaması</li>
+    <li>Her kelimeye tıklandığında açılan tooltip: lemma, Türkçe/İngilizce çeviri, sözcük türü, kaynak tablo</li>
+    <li>Tanıma istatistiği: X/Y kelime sözlükte bulundu</li>
+    <li>Bulunan kelimelerin tam listesi tablo olarak gösterilir</li>
+  </ul>
+
+  <h3>9.5. İstatistik Paneli</h3>
+  <ul>
+    <li>Toplam kelime, çekim formu ve örnek cümle sayıları</li>
+    <li>Sözcük türü dağılımı yatay çubuk grafiği</li>
+    <li>Planlanan özellikler listesi</li>
+  </ul>
+</div>
+
+<!-- ══ BÖLÜM 10: PEDAGOJİK ÇERÇEVE ══════════════════════════════════════════ -->
+<h2>10. Pedagojik Çerçeve</h2>
+
+<p>Platform tasarımında kanıta dayalı dil öğrenme pedagojisi esas alınmaktadır. Benimsenen yaklaşımlar şunlardır:</p>
+
+<h3>10.1. Comprehensible Input (Anlaşılabilir Girdi)</h3>
+<p>Stephen Krashen'in Girdi Hipotezi'ne göre dil edinimi, öğrencinin mevcut seviyesinin biraz üzerinde anlaşılabilir dil girdisine maruz kalmasıyla gerçekleşir. Metin analizi modülü, öğrencilerin her kelimeyi anlayarak özgün Latince metinler okumasını sağlar — bu sayede gerçek bağlam içinde dil edinimi desteklenir.</p>
+
+<h3>10.2. Aralıklı Tekrar (Spaced Repetition)</h3>
+<p>Faz 2'de uygulanacak olan adaptif tekrar sistemi, SM-2 algoritması (Anki'nin temel algoritması) temel alınarak geliştirilecektir. Öğrenci yanlış yanıtladığı kelimeleri daha sık, doğru yanıtladıklarını daha seyrek görecektir. Bu yöntem, uzun vadeli kelime hafızasını önemli ölçüde artırdığı bilimsel olarak kanıtlanmıştır.</p>
+
+<h3>10.3. Aktif Hatırlama (Active Recall)</h3>
+<p>Kelime ve çekim testleri, öğrenciyi pasif okuma yerine aktif olarak bilgiyi bellekten çekmeye zorlar. Bilişsel bilim araştırmaları, bu yöntemin tekrar okumaya kıyasla 2–3 kat daha etkili olduğunu göstermektedir.</p>
+
+<h3>10.4. Anlık Geri Bildirim</h3>
+<p>Her test sorusunda anlık geri bildirim (doğru/yanlış, doğru yanıt gösterimi) sağlanmaktadır. Bu özellik, yanlış öğrenilen kavramların kalıcı hale gelmesini engellemektedir.</p>
+
+<!-- ══ BÖLÜM 11: GELECEK PLANLAR ══════════════════════════════════════════════ -->
+<div class="page-break">
+  <h2>11. Gelecek Planları — Mobil Uygulama</h2>
+
+  <p>Projenin ikinci aşaması, mevcut web platformunu tamamlayacak yerel bir mobil uygulama geliştirmeyi kapsamaktadır.</p>
+
+  <h3>11.1. Teknik Plan</h3>
+
+  <table class="data avoid-break">
+    <thead>
+      <tr><th>Bileşen</th><th>Teknoloji</th><th>Açıklama</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Framework</td>
+        <td>React Native + Expo</td>
+        <td>iOS ve Android için tek kod tabanı; web kodu büyük ölçüde yeniden kullanılabilir</td>
+      </tr>
+      <tr>
+        <td>Çevrimdışı</td>
+        <td>SQLite (expo-sqlite)</td>
+        <td>Tüm veri tabanı yerel cihaza indirilebilir; internet bağlantısı gerektirmez</td>
+      </tr>
+      <tr>
+        <td>Ses / TTS</td>
+        <td>expo-speech</td>
+        <td>Latince kelimelerin doğru telaffuzla seslendirilmesi</td>
+      </tr>
+      <tr>
+        <td>Bildirimler</td>
+        <td>expo-notifications</td>
+        <td>Günlük tekrar hatırlatmaları; öğrenme serisi korunması</td>
+      </tr>
+      <tr>
+        <td>Kimlik Doğrulama</td>
+        <td>Supabase Auth</td>
+        <td>Web ile eşleşik kullanıcı hesabı; ilerleme buluta senkronize edilir</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>11.2. Planlanan Özellikler</h3>
+
+  <ul>
+    <li><strong>Kişisel kelime listesi:</strong> Öğrenci istediği kelimeleri kaydedebilir ve özel alıştırma paketi oluşturabilir</li>
+    <li><strong>Adaptif quiz sistemi:</strong> SM-2 tabanlı aralıklı tekrar; günlük öğrenme hedefi (ör. 10 yeni kelime)</li>
+    <li><strong>Latince metin okuyucu:</strong> Caesar, Cicero, Vergilius gibi klasik metinleri kelime kelime inceleyen interaktif okuyucu</li>
+    <li><strong>Telaffuz rehberi:</strong> Klasik ve Geleneksel Kilise Latincesi telaffuz seçeneği ile sesli rehber</li>
+    <li><strong>Öğrenme serisi:</strong> Her gün çalışmayı teşvik eden gün serisi sistemi (Duolingo streak benzeri)</li>
+    <li><strong>Çevrimdışı tam destek:</strong> İnternet bağlantısı olmadan da tüm özellikler kullanılabilir</li>
+    <li><strong>Öğretmen paneli:</strong> Öğretmenler sınıf oluşturabilir, ödev verebilir ve öğrenci ilerlemesini izleyebilir</li>
+  </ul>
+
+  <h3>11.3. Geliştirme Takvimi</h3>
+
+  <table class="data avoid-break">
+    <thead>
+      <tr><th>Dönem</th><th>Hedef</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Q2 2026</td><td>React Native proje yapısı + Supabase bağlantısı + çevrimdışı SQLite senkronizasyonu</td></tr>
+      <tr><td>Q3 2026</td><td>Kelime kartları, quiz sistemi, kullanıcı hesabı, ilerleme takibi</td></tr>
+      <tr><td>Q4 2026</td><td>Metin okuyucu, telaffuz, bildirimler, App Store / Play Store gönderimi</td></tr>
+      <tr><td>Q1 2027</td><td>Öğretmen paneli, sınıf yönetimi, analitik raporlama</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ══ BÖLÜM 12: AKADEMİK KATKI ══════════════════════════════════════════════ -->
+<h2>12. Akademik Katkı Potansiyeli</h2>
+
+<p>Bu proje, teknik bir geliştirme çalışmasının ötesinde çeşitli akademik alanlara katkı sunabilecek kaynaklara sahiptir.</p>
+
+<h3>12.1. Dilbilim ve Latince Çalışmaları</h3>
+<ul>
+  <li>Türkçe–Latince sözcük ailesi karşılaştırmaları için yapılandırılmış veri tabanı</li>
+  <li>Latince ödünç kelimelerin Türkçeye geçiş yolları araştırması için kaynak</li>
+  <li>Latince frekans çalışmaları için işlenmiş sözcük sıklığı verileri</li>
+</ul>
+
+<h3>12.2. Eğitim Teknolojisi</h3>
+<ul>
+  <li>Klasik dil öğreniminde dijital araç etkinliği üzerine kullanıcı çalışması</li>
+  <li>Aralıklı tekrar sisteminin Latince kelime edinimine etkisi</li>
+  <li>Metin analizi tabanlı okuma yaklaşımının geleneksel yöntemlerle karşılaştırılması</li>
+</ul>
+
+<h3>12.3. Bilgisayar Bilimi</h3>
+<ul>
+  <li>Wikitext'ten yapılandırılmış dil verisi çıkarımı için metodoloji (yayın potansiyeli yüksek)</li>
+  <li>Latince morfoloji kurallarının hesaplamalı modellenmesi</li>
+  <li>Çok dilli sözlük oluşturma sürecinin otomasyonu</li>
+</ul>
+
+<div class="callout highlight">
+  <div class="callout-title">Yayın Fırsatı</div>
+  Wikitext'ten otomatik Latince–Türkçe sözlük oluşturma metodolojisi, <em>Journal of Digital Humanities</em>, <em>Digital Scholarship in the Humanities</em> veya benzer hakemli dergilerde yayınlanabilecek özgün bir katkı niteliği taşımaktadır.
+</div>
+
+<!-- ══ BÖLÜM 13: SONUÇ ════════════════════════════════════════════════════════ -->
+<div class="page-break">
+  <h2>13. Sonuç</h2>
+
+  <p>Bu proje, Türkiye'deki Latince öğrencilerinin ve araştırmacılarının karşılaştığı somut bir boşluğu doldurmak amacıyla başlatılmıştır. Bugüne kadar ulaşılan nokta şu şekilde özetlenebilir:</p>
+
+  <ul>
+    <li>32.632 sözlük maddesi ve 554.764 çekim formu içeren kapsamlı bir veri tabanı oluşturulmuştur</li>
+    <li>Tüm veri tamamen otomatik bir Python hattıyla işlenmiş; süreç yeniden çalıştırılabilir ve genişletilebilir özelliktedir</li>
+    <li>Web prototipi sözlük, alıştırmalar, metin analizi ve istatistik modülleriyle çalışır durumdadır</li>
+    <li>Sistem, günlük yüz binlerce kullanıcıya hizmet verebilecek ölçeklenebilir bir bulut altyapısı üzerinde çalışmaktadır</li>
+  </ul>
+
+  <p>Projenin mevcut haliyle bile Türkiye'deki Latince öğrencilerine bugün mevcut olan hiçbir Türkçe dijital araçta bulunmayan özellikler sunduğu görülmektedir. Önümüzdeki aşamalarda mobil uygulamanın geliştirilmesi, adaptif öğrenme sisteminin eklenmesi ve öğretmen panelinin hayata geçirilmesiyle platform tam anlamıyla bir <em>Türkçe Latince öğrenme ekosistemi</em> haline gelecektir.</p>
+
+  <div class="callout highlight" style="margin-top: 2em;">
+    <div class="callout-title">Sonraki Adımlar</div>
+    <ol style="margin: 6px 0 0 20px;">
+      <li>Pilot kullanıcı testi — Latince dersi alan 10–20 öğrenciyle geri bildirim toplama</li>
+      <li>Veri kalitesi iyileştirme — 3. deklinasyon genitif formlarının Wiktionary üzerinden tamamlanması</li>
+      <li>Mobil uygulama geliştirme başlangıcı (React Native)</li>
+      <li>Akademik yayın hazırlığı — Latince–Türkçe sözlük metodolojisi</li>
+    </ol>
+  </div>
+
+  <p style="margin-top: 2em; color: var(--stone-500); font-size: 10pt; border-top: 1px solid var(--stone-200); padding-top: 12px;">
+    Demo: <strong>localhost:3000</strong> · Veri tabanı: Supabase PostgreSQL · Mart 2026
+  </p>
+</div>
+
+<!-- Baskı Düğmesi -->
+<button class="print-btn no-print" onclick="window.print()">🖨️ PDF Olarak Kaydet</button>
+
+</body>
+</html>
