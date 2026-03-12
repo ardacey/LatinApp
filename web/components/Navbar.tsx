@@ -7,7 +7,7 @@ const links = [
   { href: "/exercises", label: "Alıştırmalar" },
   { href: "/analyze", label: "Metin Analizi" },
   { href: "/stats", label: "İstatistikler" },
-  // { href: "/admin", label: "Admin", subtle: true },
+  // { href: "/admin", label: "Admin" },
 ];
 
 export default function Navbar() {
@@ -25,8 +25,6 @@ export default function Navbar() {
               href={l.href}
               className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                 pathname === l.href
-                  ? "bg-stone-100 text-stone-900"
-                  : l.subtle
                   ? "text-stone-300 hover:text-stone-500 hover:bg-stone-50"
                   : "text-stone-500 hover:text-stone-900 hover:bg-stone-50"
               }`}
