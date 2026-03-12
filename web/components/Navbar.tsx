@@ -7,7 +7,7 @@ const links = [
   { href: "/exercises", label: "Alıştırmalar" },
   { href: "/analyze", label: "Metin Analizi" },
   { href: "/stats", label: "İstatistikler" },
-  { href: "/admin", label: "Admin", subtle: true },
+  // { href: "/admin", label: "Admin", subtle: true },
 ];
 
 export default function Navbar() {
