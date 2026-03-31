@@ -69,12 +69,13 @@ export default function DictionaryPage() {
       // Tekrar eden id'leri temizle, sıralama: latin-başlayan > latin-içeren > türkçe > ingilizce
       const seen = new Set<string>();
       const merged: Word[] = [];
-      for (const row of [
-        ...(latinStart.data ?? []),
-        ...(latinContain.data ?? []),
-        ...(turkishRes.data ?? []),
-        ...(englishRes.data ?? []),
-      ]) {
+      const allRows: Word[] = [
+        ...((latinStart.data ?? []) as Word[]),
+        ...((latinContain.data ?? []) as Word[]),
+        ...((turkishRes.data ?? []) as Word[]),
+        ...((englishRes.data ?? []) as Word[]),
+      ];
+      for (const row of allRows) {
         if (!seen.has(row.id)) { seen.add(row.id); merged.push(row); }
       }
 
