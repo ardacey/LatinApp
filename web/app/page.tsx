@@ -68,7 +68,7 @@ export default function DictionaryPage() {
 
       // Tekrar eden id'leri temizle, sıralama: latin-başlayan > latin-içeren > türkçe > ingilizce
       const seen = new Set<string>();
-      const merged: typeof latinStart.data = [];
+      const merged: Word[] = [];
       for (const row of [
         ...(latinStart.data ?? []),
         ...(latinContain.data ?? []),
