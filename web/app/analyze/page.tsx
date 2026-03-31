@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 
 // ─── Sabitler ─────────────────────────────────────────────────────────────────
 const EXAMPLES = [
@@ -52,6 +53,7 @@ type WordInfo = {
   english: string | null;
   part_of_speech: string;
   via: string;
+  word_id: string;
 };
 
 type Token = {
@@ -99,6 +101,7 @@ type RpcRow = {
   english: string | null;
   part_of_speech: string;
   via: string;
+  word_id: string;
 };
 
 // Öncelik (düşükten yükseğe): sıfat formu < fiil formu < isim formu < sözlük
@@ -165,6 +168,7 @@ async function analyze(text: string): Promise<{ tokens: Token[]; error?: string 
         english: row.english,
         part_of_speech: row.part_of_speech,
         via: row.via,
+        word_id: row.word_id,
       });
     }
   }
@@ -249,13 +253,13 @@ function WordToken({ token }: { token: Token }) {
               {token.info.via}
             </span>
           </div>
-          <a
-            href={`/admin?q=${encodeURIComponent(token.info.latin)}`}
+          <Link
+            href={`/word/${token.info.word_id}`}
             className="mt-2 block text-[10px] text-stone-400 hover:text-stone-600 underline"
             onClick={(e) => e.stopPropagation()}
           >
-            Çeviriyi düzenle →
-          </a>
+            Kelime sayfası →
+          </Link>
         </span>
       )}
     </span>
@@ -426,7 +430,11 @@ export default function AnalyzePage() {
                         return (
                           <tr key={i} className="border-b border-stone-50 hover:bg-stone-50">
                             <td className="px-5 py-2 font-mono italic text-stone-600">{t.text}</td>
-                            <td className="px-5 py-2 font-semibold text-stone-800">{t.info!.latin}</td>
+                            <td className="px-5 py-2 font-semibold text-stone-800">
+                              <Link href={`/word/${t.info!.word_id}`} className="hover:underline">
+                                {t.info!.latin}
+                              </Link>
+                            </td>
                             <td className="px-5 py-2 text-stone-600">{t.info!.turkish ?? "—"}</td>
                             <td className="px-5 py-2">
                               <span

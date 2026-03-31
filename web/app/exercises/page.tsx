@@ -1,6 +1,7 @@
 "use client";
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import { motion, AnimatePresence } from "framer-motion";
 
 type QuizWord = {
   id: string;
@@ -434,8 +435,137 @@ function ConjugationQuiz({ onBack }: { onBack: () => void }) {
   );
 }
 
+// ─── Flashcard Modu ───────────────────────────────────────────────────────────
+function FlashcardMode({ onBack }: { onBack: () => void }) {
+  const [card, setCard] = useState<QuizWord | null>(null);
+  const [flipped, setFlipped] = useState(false);
+  const [score, setScore] = useState({ right: 0, wrong: 0 });
+  const [loading, setLoading] = useState(true);
+
+  const next = useCallback(async (knew?: boolean) => {
+    if (knew !== undefined) {
+      setScore(s => knew ? { ...s, right: s.right + 1 } : { ...s, wrong: s.wrong + 1 });
+    }
+    setLoading(true);
+    setFlipped(false);
+    const offset = Math.floor(Math.random() * 30000);
+    const { data } = await supabase
+      .from("words")
+      .select("id, latin, turkish, english, part_of_speech, genitive")
+      .not("turkish", "is", null)
+      .range(offset, offset)
+      .single();
+    if (data) setCard(data as QuizWord);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { next(); }, [next]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === " ") { e.preventDefault(); setFlipped(f => !f); }
+      if (e.key === "ArrowRight" && flipped) next(true);
+      if (e.key === "ArrowLeft" && flipped) next(false);
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [flipped, next]);
+
+  const total = score.right + score.wrong;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <button type="button" onClick={onBack} className="text-sm text-stone-500 hover:text-stone-800">← Geri</button>
+        <span className="text-sm text-stone-500">
+          <span className="text-green-600 font-semibold">{score.right}</span>
+          <span className="text-stone-300 mx-1">/</span>
+          <span className="text-red-500 font-semibold">{score.wrong}</span>
+          {total > 0 && <span className="text-stone-400 ml-2">({Math.round((score.right / total) * 100)}%)</span>}
+        </span>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <div className="w-8 h-8 border-2 border-stone-200 border-t-stone-500 rounded-full animate-spin" />
+        </div>
+      ) : !card ? (
+        <p className="text-center text-stone-400 py-16">Kart yüklenemedi.</p>
+      ) : (
+        <div className="max-w-lg mx-auto">
+          <button
+            type="button"
+            onClick={() => setFlipped(f => !f)}
+            className="w-full min-h-56 bg-white border-2 border-stone-200 rounded-2xl shadow-sm p-10 text-center hover:border-stone-400 transition-all cursor-pointer overflow-hidden"
+          >
+            <AnimatePresence mode="wait">
+              {!flipped ? (
+                <motion.div
+                  key="front"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <p className="text-xs text-stone-400 uppercase tracking-widest mb-6">Türkçesi nedir?</p>
+                  <p className="text-4xl font-bold font-serif text-stone-800 mb-3">{card.latin}</p>
+                  {card.genitive && <p className="text-stone-400 text-sm">{card.genitive}</p>}
+                  <p className="text-stone-300 text-xs mt-6">Boşluk tuşuna bas veya kartı tıkla</p>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="back"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <p className="text-xs text-stone-400 uppercase tracking-widest mb-6">Cevap</p>
+                  <p className="text-3xl font-bold text-stone-800 mb-2">{card.turkish}</p>
+                  {card.english && <p className="text-stone-500 text-sm italic">{card.english}</p>}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </button>
+
+          <AnimatePresence>
+            {flipped && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                transition={{ duration: 0.15 }}
+                className="flex gap-3 mt-4"
+              >
+                <button
+                  type="button"
+                  onClick={() => next(false)}
+                  className="flex-1 py-3 rounded-xl border-2 border-red-200 bg-red-50 text-red-700 font-semibold hover:bg-red-100 transition-colors"
+                >
+                  ✗ Bilmedim
+                </button>
+                <button
+                  type="button"
+                  onClick={() => next(true)}
+                  className="flex-1 py-3 rounded-xl border-2 border-green-200 bg-green-50 text-green-700 font-semibold hover:bg-green-100 transition-colors"
+                >
+                  ✓ Bildim
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <p className="text-center text-xs text-stone-300 mt-4">
+            {flipped ? "← Bilmedim · Bildim →" : "Boşluk: çevir"}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Menü ─────────────────────────────────────────────────────────────────────
-type Mode = "menu" | "vocab" | "declension" | "conjugation";
+type Mode = "menu" | "vocab" | "declension" | "conjugation" | "flashcard";
 
 const EXERCISE_CARDS = [
   {
@@ -457,6 +587,13 @@ const EXERCISE_CARDS = [
     icon: "🔤",
     label: "Fiil Çekimi",
     desc: "Verilen zaman ve şahıs için fiilin doğru çekimini 4 seçenek arasından bul",
+    active: true,
+  },
+  {
+    id: "flashcard" as Mode,
+    icon: "🃏",
+    label: "Flashcard",
+    desc: "Kelimeyi gör, Türkçesini tahmin et, çevir — boşluk tuşu ile geç",
     active: true,
   },
   {
@@ -491,6 +628,7 @@ export default function ExercisesPage() {
   if (mode === "vocab") return <VocabQuiz onBack={() => setMode("menu")} />;
   if (mode === "declension") return <DeclensionQuiz onBack={() => setMode("menu")} />;
   if (mode === "conjugation") return <ConjugationQuiz onBack={() => setMode("menu")} />;
+  if (mode === "flashcard") return <FlashcardMode onBack={() => setMode("menu")} />;
 
   return (
     <div>

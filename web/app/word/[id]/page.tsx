@@ -3,6 +3,8 @@ import type { Word, NounForm, VerbForm, AdjectiveForm, Example } from "@/types/d
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+export const revalidate = 86400; // 24 saat cache
+
 const POS_LABELS: Record<string, string> = {
   noun: "İsim", verb: "Fiil", adjective: "Sıfat", adverb: "Zarf",
   preposition: "Edat", conjunction: "Bağlaç", pronoun: "Zamir",
@@ -142,8 +144,31 @@ export default async function WordPage({ params }: { params: Promise<{ id: strin
     ]);
 
   if (!word) notFound();
-
   const w = word as Word;
+
+  // Benzer kelimeler: aynı deklinasyon/konjugasyon grubundan, farklı kelimeler
+  let similarWords: Word[] = [];
+  if (w.part_of_speech === "noun" && w.declension) {
+    const { data } = await supabase
+      .from("words")
+      .select("id, latin, turkish, part_of_speech, declension, gender, genitive")
+      .eq("part_of_speech", "noun")
+      .eq("declension", w.declension)
+      .neq("id", id)
+      .not("turkish", "is", null)
+      .limit(6);
+    similarWords = (data ?? []) as Word[];
+  } else if (w.part_of_speech === "verb" && w.conjugation) {
+    const { data } = await supabase
+      .from("words")
+      .select("id, latin, turkish, part_of_speech, conjugation, present_1sg")
+      .eq("part_of_speech", "verb")
+      .eq("conjugation", w.conjugation)
+      .neq("id", id)
+      .not("turkish", "is", null)
+      .limit(6);
+    similarWords = (data ?? []) as Word[];
+  }
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -235,6 +260,30 @@ export default async function WordPage({ params }: { params: Promise<{ id: strin
                 {ex.turkish && <p className="text-stone-600 text-sm mt-1">{ex.turkish}</p>}
                 {ex.english && <p className="text-stone-400 text-xs mt-0.5">{ex.english}</p>}
               </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
+      {/* Benzer Kelimeler */}
+      {similarWords.length > 0 && (
+        <Section title={
+          w.part_of_speech === "noun"
+            ? `${w.declension}. Deklinasyon — Diğer Kelimeler`
+            : `${w.conjugation}. Konjugasyon — Diğer Kelimeler`
+        }>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+            {similarWords.map((sw) => (
+              <Link
+                key={sw.id}
+                href={`/word/${sw.id}`}
+                className="rounded-xl border border-stone-200 bg-stone-50 px-3 py-2.5 hover:border-stone-400 hover:bg-white transition-all"
+              >
+                <p className="font-semibold text-stone-800 text-sm">{sw.latin}</p>
+                {sw.genitive && <p className="text-stone-400 text-xs">{sw.genitive}</p>}
+                {sw.present_1sg && <p className="text-stone-400 text-xs">{sw.present_1sg}</p>}
+                <p className="text-stone-500 text-xs mt-0.5 truncate">{sw.turkish}</p>
+              </Link>
             ))}
           </div>
         </Section>
