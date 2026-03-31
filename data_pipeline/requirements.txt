@@ -1,0 +1,10 @@
+# Latin Veri Pipeline — Bağımlılıklar
+# Kurulum: pip install -r requirements.txt
+
+requests>=2.31.0          # HTTP istekleri (Wiktionary API)
+beautifulsoup4>=4.12.0    # HTML/WikiText yedek ayrıştırma
+lxml>=5.1.0               # BeautifulSoup arka ucu
+pandas>=2.2.0             # Veri analizi / isteğe bağlı CSV çıktı
+python-dotenv>=1.0.0      # .env'den Supabase kimlik bilgileri
+tqdm>=4.66.0              # İlerleme çubuğu
+deep-translator>=1.11.0   # Google Translate (tr.wiktionary yoksa İngilizce → Türkçe)

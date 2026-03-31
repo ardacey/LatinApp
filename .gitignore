@@ -1,0 +1,33 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# Data pipeline — büyük/hassas dosyalar
+data_pipeline/.env
+data_pipeline/export_enriched/
+data_pipeline/export/
+data_pipeline/output/
+data_pipeline/*_checkpoint.json
+data_pipeline/principals_ckpt.json
+data_pipeline/enrich_llm.log
+
+# Next.js
+web/node_modules/
+web/.next/
+web/out/
+web/.env*
+web/*.tsbuildinfo
+
+# Claude
+.claude/

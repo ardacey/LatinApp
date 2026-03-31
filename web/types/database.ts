@@ -57,7 +57,9 @@ export type Word = {
   gender: string | null;
   genitive: string | null;
   present_1sg: string | null;
-  frequency: number;
+  infinitive: string | null;
+  perfect: string | null;
+  supine: string | null;
   created_at: string;
 };
 

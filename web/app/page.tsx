@@ -37,30 +37,49 @@ export default function DictionaryPage() {
 
     if (query.trim()) {
       const q2 = query.trim();
-      // İki sorgu: önce "est%" ile başlayanlar, sonra içinde "est" geçip başlamayanlar
-      const [startRes, containRes] = await Promise.all([
+      // Latin, Türkçe veya İngilizce arama — önce başlayanlar, sonra içinde geçenler
+      const [latinStart, latinContain, turkishRes, englishRes] = await Promise.all([
         supabase
           .from("words")
           .select("*", { count: "exact" })
           .ilike("latin", `${q2}%`)
-          .order("frequency", { ascending: true })
-          .range(0, 999),
+          .order("latin", { ascending: true })
+          .range(0, 499),
         supabase
           .from("words")
           .select("*", { count: "exact" })
           .ilike("latin", `%${q2}%`)
           .not("latin", "ilike", `${q2}%`)
-          .order("frequency", { ascending: true })
-          .range(0, 999),
+          .order("latin", { ascending: true })
+          .range(0, 499),
+        supabase
+          .from("words")
+          .select("*", { count: "exact" })
+          .ilike("turkish", `%${q2}%`)
+          .order("latin", { ascending: true })
+          .range(0, 499),
+        supabase
+          .from("words")
+          .select("*", { count: "exact" })
+          .ilike("english", `%${q2}%`)
+          .order("latin", { ascending: true })
+          .range(0, 499),
       ]);
-      const startData  = startRes.data  ?? [];
-      const containData = containRes.data ?? [];
-      const merged = [...startData, ...containData];
-      const startCount  = (startRes.count  ?? 0);
-      const containCount = (containRes.count ?? 0);
-      const pageData = merged.slice(p * PAGE_SIZE, p * PAGE_SIZE + PAGE_SIZE);
-      setWords(pageData);
-      setTotal(startCount + containCount);
+
+      // Tekrar eden id'leri temizle, sıralama: latin-başlayan > latin-içeren > türkçe > ingilizce
+      const seen = new Set<string>();
+      const merged: typeof latinStart.data = [];
+      for (const row of [
+        ...(latinStart.data ?? []),
+        ...(latinContain.data ?? []),
+        ...(turkishRes.data ?? []),
+        ...(englishRes.data ?? []),
+      ]) {
+        if (!seen.has(row.id)) { seen.add(row.id); merged.push(row); }
+      }
+
+      setWords(merged.slice(p * PAGE_SIZE, p * PAGE_SIZE + PAGE_SIZE));
+      setTotal(merged.length);
       setPage(p);
       setLoading(false);
       return;
@@ -69,7 +88,7 @@ export default function DictionaryPage() {
     let q = supabase
       .from("words")
       .select("*", { count: "exact" })
-      .order("frequency", { ascending: true })
+      .order("latin", { ascending: true })
       .range(p * PAGE_SIZE, p * PAGE_SIZE + PAGE_SIZE - 1);
 
     if (pos) q = q.eq("part_of_speech", pos);

@@ -290,8 +290,152 @@ function DeclensionQuiz({ onBack }: { onBack: () => void }) {
   );
 }
 
+// ─── Fiil Çekimi Testi ────────────────────────────────────────────────────────
+const TENSE_LABELS: Record<string, string> = {
+  pres: "Praesens", imperf: "Imperfectum", fut: "Futurum",
+  perf: "Perfectum", plup: "Plusquamperfectum",
+};
+const PERSON_LABELS: Record<string, string> = {
+  "1-sg": "1. tekil", "2-sg": "2. tekil", "3-sg": "3. tekil",
+  "1-pl": "1. çoğul", "2-pl": "2. çoğul", "3-pl": "3. çoğul",
+};
+
+type VerbFormRow = { id: string; word_id: string; form: string; tense: string; mood: string; voice: string; person: number | null; number: string | null };
+
+function ConjugationQuiz({ onBack }: { onBack: () => void }) {
+  const [question, setQuestion] = useState<{ verb: string; turkish: string; tense: string; person: number; number: string; correct: string } | null>(null);
+  const [options, setOptions] = useState<string[]>([]);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [score, setScore] = useState({ right: 0, wrong: 0 });
+  const [loading, setLoading] = useState(true);
+
+  const next = useCallback(async () => {
+    setLoading(true);
+    setSelected(null);
+
+    const offset = Math.floor(Math.random() * 5000);
+    const { data: words } = await supabase
+      .from("words")
+      .select("id, latin, turkish")
+      .eq("part_of_speech", "verb")
+      .not("present_1sg", "is", null)
+      .range(offset, offset + 4);
+
+    if (!words || words.length === 0) { setLoading(false); return; }
+
+    const word = words[Math.floor(Math.random() * words.length)] as { id: string; latin: string; turkish: string | null };
+
+    const { data: forms } = await supabase
+      .from("verb_forms")
+      .select("id, word_id, form, tense, mood, voice, person, number")
+      .eq("word_id", word.id)
+      .eq("mood", "indicative")
+      .eq("voice", "active")
+      .in("tense", ["pres", "imperf", "fut", "perf"]);
+
+    if (!forms || forms.length < 4) { setLoading(false); return; }
+
+    const target = forms[Math.floor(Math.random() * forms.length)] as VerbFormRow;
+    if (!target.person || !target.number) { setLoading(false); return; }
+
+    // Yanlış seçenekler: aynı fiilin farklı formları
+    const distractors = shuffle(
+      (forms as VerbFormRow[]).filter(f => f.form !== target.form).map(f => f.form)
+    ).slice(0, 3);
+
+    if (distractors.length < 3) { setLoading(false); return; }
+
+    setQuestion({
+      verb: word.latin,
+      turkish: word.turkish ?? "",
+      tense: target.tense,
+      person: target.person,
+      number: target.number,
+      correct: target.form,
+    });
+    setOptions(shuffle([target.form, ...distractors]));
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { next(); }, [next]);
+
+  const pick = (opt: string) => {
+    if (selected) return;
+    setSelected(opt);
+    if (opt === question?.correct) setScore(s => ({ ...s, right: s.right + 1 }));
+    else setScore(s => ({ ...s, wrong: s.wrong + 1 }));
+  };
+
+  const total = score.right + score.wrong;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-6">
+        <button type="button" onClick={onBack} className="text-sm text-stone-500 hover:text-stone-800">← Geri</button>
+        <span className="text-sm text-stone-500">
+          <span className="text-green-600 font-semibold">{score.right}</span>
+          <span className="text-stone-300 mx-1">/</span>
+          <span className="text-red-500 font-semibold">{score.wrong}</span>
+          {total > 0 && <span className="text-stone-400 ml-2">({Math.round((score.right / total) * 100)}%)</span>}
+        </span>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <div className="w-8 h-8 border-2 border-stone-200 border-t-stone-500 rounded-full animate-spin" />
+        </div>
+      ) : !question ? (
+        <p className="text-center text-stone-400 py-16">Soru yüklenemedi, tekrar deneyin.</p>
+      ) : (
+        <div className="max-w-lg mx-auto">
+          <div className="bg-white border border-stone-200 rounded-2xl shadow-sm p-10 mb-6 text-center">
+            <p className="text-xs text-stone-400 uppercase tracking-widest mb-4">Fiil Çekimi</p>
+            <p className="text-3xl font-bold text-stone-800 font-serif mb-2">{question.verb}</p>
+            {question.turkish && <p className="text-sm text-stone-500 italic mb-4">{question.turkish}</p>}
+            <p className="text-stone-600 text-sm">
+              <span className="font-semibold text-stone-800">{TENSE_LABELS[question.tense]}</span>
+              {" — "}
+              <span className="font-semibold text-stone-800">{PERSON_LABELS[`${question.person}-${question.number}`]}</span>
+              {" — etken"}
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            {options.map((opt) => {
+              const isCorrect = opt === question.correct;
+              const isSelected = selected === opt;
+              let cls = "border-2 rounded-xl px-4 py-4 text-center font-semibold font-mono text-sm transition-all duration-150 ";
+              if (!selected) cls += "border-stone-200 bg-white hover:border-stone-800 hover:shadow-sm text-stone-800 cursor-pointer";
+              else if (isCorrect) cls += "border-green-500 bg-green-50 text-green-800";
+              else if (isSelected) cls += "border-red-400 bg-red-50 text-red-700";
+              else cls += "border-stone-100 bg-stone-50 text-stone-400 cursor-default";
+              return <button type="button" key={opt} onClick={() => pick(opt)} className={cls}>{opt}</button>;
+            })}
+          </div>
+
+          {selected && (
+            <div className="mt-6 text-center">
+              {selected === question.correct ? (
+                <p className="text-green-700 font-semibold text-lg mb-4">✓ Doğru!</p>
+              ) : (
+                <div className="mb-4">
+                  <p className="text-red-600 font-semibold text-lg">✗ Yanlış</p>
+                  <p className="text-stone-600 text-sm mt-1">Doğru yanıt: <strong className="text-stone-800 font-mono">{question.correct}</strong></p>
+                </div>
+              )}
+              <button onClick={next} className="bg-stone-800 text-white px-8 py-2.5 rounded-xl text-sm font-semibold hover:bg-stone-700 transition-colors">
+                Sonraki Soru →
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Menü ─────────────────────────────────────────────────────────────────────
-type Mode = "menu" | "vocab" | "declension";
+type Mode = "menu" | "vocab" | "declension" | "conjugation";
 
 const EXERCISE_CARDS = [
   {
@@ -309,18 +453,17 @@ const EXERCISE_CARDS = [
     active: true,
   },
   {
+    id: "conjugation" as Mode,
+    icon: "🔤",
+    label: "Fiil Çekimi",
+    desc: "Verilen zaman ve şahıs için fiilin doğru çekimini 4 seçenek arasından bul",
+    active: true,
+  },
+  {
     id: "menu" as Mode,
     icon: "📖",
     label: "Cümle Tamamlama",
     desc: "Latince cümlelerdeki boşlukları doğru kelimeyle doldur",
-    active: false,
-    soon: true,
-  },
-  {
-    id: "menu" as Mode,
-    icon: "🔤",
-    label: "Yazım Alıştırması",
-    desc: "Türkçe anlamı verilen kelimenin Latince yazımını yaz",
     active: false,
     soon: true,
   },
@@ -347,6 +490,7 @@ export default function ExercisesPage() {
 
   if (mode === "vocab") return <VocabQuiz onBack={() => setMode("menu")} />;
   if (mode === "declension") return <DeclensionQuiz onBack={() => setMode("menu")} />;
+  if (mode === "conjugation") return <ConjugationQuiz onBack={() => setMode("menu")} />;
 
   return (
     <div>

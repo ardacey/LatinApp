@@ -160,6 +160,9 @@ export default async function WordPage({ params }: { params: Promise<{ id: strin
             <div className="flex items-center gap-3 mt-2 flex-wrap">
               {w.genitive && <span className="text-stone-500">{w.genitive}</span>}
               {w.present_1sg && <span className="text-stone-500">{w.present_1sg}</span>}
+              {w.infinitive && <span className="text-stone-500">{w.infinitive}</span>}
+              {w.perfect && <span className="text-stone-500">{w.perfect}</span>}
+              {w.supine && <span className="text-stone-500">{w.supine}</span>}
               {w.gender && <span className="text-stone-500 italic">{w.gender}.</span>}
               {w.declension && <span className="text-stone-400 text-sm">{w.declension}. deklinasyon</span>}
               {w.conjugation && <span className="text-stone-400 text-sm">{w.conjugation}. konjugasyon</span>}
