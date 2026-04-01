@@ -58,6 +58,10 @@ function WordOfTheDay() {
 }
 
 // ─── Form Arama ───────────────────────────────────────────────────────────────
+type NounRow = { form: string; case: string | null; number: string; word_id: string };
+type VerbRow = { form: string; tense: string; mood: string; voice: string; person: number | null; number: string | null; word_id: string };
+type AdjRow  = { form: string; case: string | null; number: string; gender: string | null; word_id: string };
+
 type FormResult = { form: string; word: Word; info: string };
 
 function FormSearch() {
@@ -77,29 +81,32 @@ function FormSearch() {
       supabase.from("adjective_forms").select(`form, "case", number, gender, word_id`).ilike("form", q.trim()).limit(10),
     ]);
 
+    const nounRows = (nounRes.data ?? []) as unknown as NounRow[];
+    const verbRows = (verbRes.data ?? []) as unknown as VerbRow[];
+    const adjRows  = (adjRes.data  ?? []) as unknown as AdjRow[];
+
     const wordIds = new Set<string>();
-    [...(nounRes.data ?? []), ...(verbRes.data ?? []), ...(adjRes.data ?? [])].forEach(
-      (r) => wordIds.add(r.word_id)
-    );
+    [...nounRows, ...verbRows, ...adjRows].forEach((r) => wordIds.add(r.word_id));
 
     if (wordIds.size === 0) { setResults([]); setLoading(false); return; }
 
-    const { data: words } = await supabase.from("words").select("*").in("id", [...wordIds]);
-    const wordMap = new Map((words ?? []).map((w) => [w.id, w as Word]));
+    const { data: wordsData } = await supabase.from("words").select("*").in("id", [...wordIds]);
+    const wordList = (wordsData ?? []) as unknown as Word[];
+    const wordMap = new Map(wordList.map((w) => [w.id, w]));
 
     const out: FormResult[] = [];
-    for (const r of nounRes.data ?? []) {
+    for (const r of nounRows) {
       const w = wordMap.get(r.word_id);
       if (w) out.push({ form: r.form, word: w, info: `İsim · ${r.case?.toUpperCase()} ${r.number === "sg" ? "tekil" : "çoğul"}` });
     }
-    for (const r of verbRes.data ?? []) {
+    for (const r of verbRows) {
       const w = wordMap.get(r.word_id);
       if (w) {
         const person = r.person && r.number ? `${r.person}. ${r.number === "sg" ? "tekil" : "çoğul"}` : "";
         out.push({ form: r.form, word: w, info: `Fiil · ${r.tense} ${r.mood} ${r.voice}${person ? " · " + person : ""}` });
       }
     }
-    for (const r of adjRes.data ?? []) {
+    for (const r of adjRows) {
       const w = wordMap.get(r.word_id);
       if (w) out.push({ form: r.form, word: w, info: `Sıfat · ${r.case?.toUpperCase()} ${r.number === "sg" ? "tekil" : "çoğul"} ${r.gender ?? ""}` });
     }

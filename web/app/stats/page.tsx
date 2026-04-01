@@ -1,5 +1,19 @@
 import { supabase } from "@/lib/supabase";
 import { POS_LABELS, POS_COLORS, cn } from "@/lib/utils";
+
+/** Explicit bar fill colors per POS — avoids fragile string splitting on POS_COLORS */
+const POS_BAR_COLORS: Record<string, string> = {
+  noun:         "bg-amber-400",
+  verb:         "bg-red-400",
+  adjective:    "bg-sky-400",
+  adverb:       "bg-purple-400",
+  preposition:  "bg-orange-400",
+  conjunction:  "bg-pink-400",
+  pronoun:      "bg-teal-400",
+  numeral:      "bg-green-400",
+  interjection: "bg-yellow-400",
+  particle:     "bg-slate-400",
+};
 import type { Metadata } from "next";
 import { BookText, AlignLeft, Type, Columns, FileText, BookOpen } from "lucide-react";
 
@@ -121,8 +135,7 @@ export default async function StatsPage() {
           {(posDist ?? []).map(([pos, count]) => {
             const pct = Math.round((count / maxPos) * 100);
             const colorClass = POS_COLORS[pos] ?? "bg-stone-50 text-stone-700 border-stone-200";
-            // Extract bg color for bar
-            const barColor = colorClass.split(" ")[0].replace("bg-", "bg-").replace("-50", "-400");
+            const barColor = POS_BAR_COLORS[pos] ?? "bg-stone-400";
             return (
               <div key={pos}>
                 <div className="flex items-center justify-between text-sm mb-1.5 gap-2">

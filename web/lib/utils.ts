@@ -42,6 +42,8 @@ export const POS_COLOR_PARTS: Record<string, { bg: string; text: string; border:
   conjunction:  { bg: "bg-pink-100",   text: "text-pink-900",   border: "border-pink-300" },
   pronoun:      { bg: "bg-teal-100",   text: "text-teal-900",   border: "border-teal-300" },
   numeral:      { bg: "bg-green-100",  text: "text-green-900",  border: "border-green-300" },
+  interjection: { bg: "bg-yellow-100", text: "text-yellow-900", border: "border-yellow-300" },
+  particle:     { bg: "bg-slate-100",  text: "text-slate-700",  border: "border-slate-300" },
 };
 
 export function posBadgeClass(pos: string): string {
