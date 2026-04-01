@@ -2,12 +2,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { BookOpen, GraduationCap, Search, BarChart2, Menu, X } from "lucide-react";
+import { BookOpen, GraduationCap, Search, BarChart2, Menu, X, Scroll } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const links = [
   { href: "/",          label: "Sözlük",       icon: BookOpen },
   { href: "/exercises", label: "Alıştırmalar",  icon: GraduationCap },
+  { href: "/reader",    label: "Metinler",      icon: Scroll },
   { href: "/analyze",   label: "Metin Analizi", icon: Search },
   { href: "/stats",     label: "İstatistikler", icon: BarChart2 },
 ];
@@ -31,7 +32,7 @@ export default function Navbar() {
         {/* Desktop nav */}
         <div className="hidden sm:flex items-center gap-1">
           {links.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href;
+            const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
             return (
               <Link
                 key={href}
@@ -65,7 +66,7 @@ export default function Navbar() {
       {open && (
         <div className="sm:hidden border-t border-stone-100 bg-white px-4 py-3 space-y-1">
           {links.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href;
+            const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
             return (
               <Link
                 key={href}
