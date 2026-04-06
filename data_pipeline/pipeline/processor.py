@@ -76,19 +76,33 @@ class DataEnricher:
             )
 
         elif pos == "verb":
-            conj  = e.get("conjugation")
-            pres1 = self._resolve_present_1sg(e)
-            is_io = self._detect_io(e)
+            conj    = e.get("conjugation")
+            pres1   = self._resolve_present_1sg(e)
+            is_io   = self._detect_io(e)
+            perfect = e.get("perfect")
             e["verb_forms"] = (
-                self._m.conjugate_verb(pres1, conj, is_io=is_io)
+                self._m.conjugate_verb(pres1, conj, is_io=is_io, perfect_1sg=perfect)
                 if conj and pres1 else []
             )
 
         elif pos == "adjective":
-            masc = e.get("latin") or ""
-            fem  = re.sub(r"us$", "a",  masc) if masc.endswith("us") else masc + "a"
-            neut = re.sub(r"us$", "um", masc) if masc.endswith("us") else masc + "um"
-            e["adjective_forms"] = self._m.decline_adjective(masc, fem, neut)
+            adj_type = self._adj_type(e)
+            if adj_type == "212":
+                masc = e.get("latin") or ""
+                fem  = re.sub(r"us$", "a",  masc) if masc.endswith("us") else masc + "a"
+                neut = re.sub(r"us$", "um", masc) if masc.endswith("us") else masc + "um"
+                e["adjective_forms"] = self._m.decline_adjective(masc, fem, neut)
+            else:
+                nom  = e.get("latin") or ""
+                gen  = e.get("genitive") or ""
+                stem = gen[:-2] if gen.lower().endswith("is") else nom
+                if adj_type == "3_2t":
+                    # 2-termination: nom_mf = nom (e.g. "gravis"), nom_n = stem + "e"
+                    nom_n = stem + "e"
+                    e["adjective_forms"] = self._m.decline_adjective_3rd(nom, nom_n, stem)
+                else:
+                    # 1-termination: same nom for all genders (e.g. "felix", "memor")
+                    e["adjective_forms"] = self._m.decline_adjective_3rd(nom, None, stem)
 
         return e
 
@@ -128,6 +142,28 @@ class DataEnricher:
     def _detect_io(e: dict) -> bool:
         """3. io çekimi tespiti: pres_1sg 'io' ile bitiyorsa."""
         return (e.get("present_1sg") or "").endswith("io")
+
+    @staticmethod
+    def _adj_type(e: dict) -> str:
+        """
+        Sıfat deklinasyon tipini döndürür: '212', '3_2t' veya '3_1t'.
+        - '212'  : bonus/bona/bonum tipi (nom -us/-er/-a/-um)
+        - '3_2t' : gravis/grave tipi (nom -is veya genitif -is, notr farklı)
+        - '3_1t' : felix/felicis, memor/memoris tipi (tek nominatif tüm cinsler)
+        """
+        nom = (e.get("latin") or "").lower()
+        gen = (e.get("genitive") or "").lower()
+        # Açık 2-1-2 belirteci
+        if nom.endswith(("us", "er")):
+            return "212"
+        # Genitif -is ise 3. deklinasyon
+        if gen.endswith("is"):
+            # 2-termination: nom -is (m/f aynı) veya -e (nötr)
+            if nom.endswith("is") or nom.endswith("e"):
+                return "3_2t"
+            return "3_1t"
+        # Fallback: 2-1-2 olarak dene
+        return "212"
 
 
 # ══════════════════════════════════════════════════════════
@@ -212,15 +248,18 @@ class DataValidator:
 class JsonExporter:
     """Supabase-uyumlu JSON dosyaları üretir."""
 
-    def __init__(self, output_dir: str = "export"):
+    def __init__(self, output_dir: str = "export", existing_ids: Optional[dict] = None):
         self._dir = Path(output_dir)
         self._dir.mkdir(parents=True, exist_ok=True)
+        # {latin_lower: word_id} — mevcut ID'leri koru
+        self._existing_ids: dict = existing_ids or {}
 
     def export(self, entries: list[dict]) -> dict[str, int]:
         words, noun_forms, verb_forms, adj_forms, examples = [], [], [], [], []
 
         for e in entries:
-            word_id = str(uuid.uuid4())
+            latin   = e.get("latin") or ""
+            word_id = self._existing_ids.get(latin.lower()) or str(uuid.uuid4())
             pos     = e.get("part_of_speech", "")
 
             words.append({
@@ -328,8 +367,19 @@ def run_processing(
     merged   = enricher.enrich(merged)   # manual'ı da zenginleştir (idempotent)
     valid    = DataValidator().validate(merged)
 
+    # Mevcut word ID'lerini yükle — aynı kelimeler için UUID'ler korunur
+    existing_ids: dict = {}
+    existing_words_path = Path(output_dir) / "sb_words.json"
+    if existing_words_path.exists():
+        try:
+            existing_words = json.loads(existing_words_path.read_text(encoding="utf-8"))
+            existing_ids = {w["latin"].lower(): w["id"] for w in existing_words if w.get("latin")}
+            log.info("Mevcut %d word ID'si yüklendi", len(existing_ids))
+        except Exception as exc:
+            log.warning("Mevcut ID'ler yüklenemedi: %s", exc)
+
     print_stats(valid)
-    counts = JsonExporter(output_dir).export(valid)
+    counts = JsonExporter(output_dir, existing_ids).export(valid)
 
     print("\n── Dışa Aktarılan Tablolar ──────────────────")
     for table, cnt in counts.items():
