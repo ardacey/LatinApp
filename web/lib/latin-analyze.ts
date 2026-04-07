@@ -114,21 +114,29 @@ export async function analyzeText(
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+  const BATCH = 20;
   let rows: RpcRow[] = [];
   try {
-    const res = await fetch(`${supabaseUrl}/rest/v1/rpc/search_latin_words`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: supabaseKey!,
-        Authorization: `Bearer ${supabaseKey}`,
-      },
-      body: JSON.stringify({ input_words: unique }),
-    });
-    if (!res.ok) return { tokens, error: `RPC hatası ${res.status}: ${await res.text()}` };
-    const json = await res.json();
-    if (Array.isArray(json)) rows = json as RpcRow[];
-    else if (json?.message) return { tokens, error: json.message };
+    const batches: string[][] = [];
+    for (let i = 0; i < unique.length; i += BATCH) batches.push(unique.slice(i, i + BATCH));
+
+    const results = await Promise.all(
+      batches.map((batch) =>
+        fetch(`${supabaseUrl}/rest/v1/rpc/search_latin_words`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: supabaseKey!,
+            Authorization: `Bearer ${supabaseKey}`,
+          },
+          body: JSON.stringify({ input_words: batch }),
+        }).then(async (res) => {
+          if (!res.ok) throw new Error(`RPC hatası ${res.status}: ${await res.text()}`);
+          return res.json() as Promise<RpcRow[]>;
+        })
+      )
+    );
+    rows = results.flat();
   } catch (e) {
     return { tokens, error: String(e) };
   }

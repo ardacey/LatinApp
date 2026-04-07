@@ -70,15 +70,22 @@ function FormSearch() {
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
 
+  const normQuery = (s: string) =>
+    s.toLowerCase().replace(/[āēīōūĀĒĪŌŪ]/g, (c) =>
+      ({ ā:"a",ē:"e",ī:"i",ō:"o",ū:"u",Ā:"a",Ē:"e",Ī:"i",Ō:"o",Ū:"u" } as Record<string,string>)[c] ?? c
+    );
+
   const search = useCallback(async (q: string) => {
     if (!q.trim()) { setResults([]); setSearched(false); return; }
     setLoading(true);
     setSearched(true);
 
+    const normalized = normQuery(q.trim());
+
     const [nounRes, verbRes, adjRes] = await Promise.all([
-      supabase.from("noun_forms").select(`form, "case", number, word_id`).ilike("form", q.trim()).limit(10),
-      supabase.from("verb_forms").select(`form, tense, mood, voice, person, number, word_id`).ilike("form", q.trim()).limit(10),
-      supabase.from("adjective_forms").select(`form, "case", number, gender, word_id`).ilike("form", q.trim()).limit(10),
+      supabase.from("noun_forms").select(`form, "case", number, word_id`).eq("norm_form", normalized).limit(10),
+      supabase.from("verb_forms").select(`form, tense, mood, voice, person, number, word_id`).eq("norm_form", normalized).limit(10),
+      supabase.from("adjective_forms").select(`form, "case", number, gender, word_id`).eq("norm_form", normalized).limit(10),
     ]);
 
     const nounRows = (nounRes.data ?? []) as unknown as NounRow[];

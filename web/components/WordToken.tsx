@@ -1,5 +1,5 @@
 "use client";
-import { useState, useContext, createContext } from "react";
+import { useState, useContext, createContext, useRef, useEffect } from "react";
 import Link from "next/link";
 import { X } from "lucide-react";
 import { cn, POS_LABELS, POS_COLOR_PARTS } from "@/lib/utils";
@@ -20,15 +20,60 @@ export function TokenGroup({ children }: { children: React.ReactNode }) {
 export function WordToken({ token, tokenKey }: { token: Token; tokenKey?: string }) {
   const group = useContext(TokenGroupContext);
   const [localOpen, setLocalOpen] = useState(false);
+  const [showBelow, setShowBelow] = useState(false);
+  const [hAlign, setHAlign] = useState<"center" | "left" | "right">("center");
+  const containerRef = useRef<HTMLSpanElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const open = group && tokenKey != null ? group.openKey === tokenKey : localOpen;
+
   const setOpen = (val: boolean) => {
+    if (val && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const TOOLTIP_H = 200;
+      const TOOLTIP_W = 240;
+
+      // Yukarı mı aşağı mı?
+      setShowBelow(rect.top < TOOLTIP_H + 16);
+
+      // Yatay taşma kontrolü
+      const centerX = rect.left + rect.width / 2;
+      const overflowRight = centerX + TOOLTIP_W / 2 - window.innerWidth;
+      const overflowLeft = -(centerX - TOOLTIP_W / 2);
+
+      if (overflowRight > 0) setHAlign("right");
+      else if (overflowLeft > 0) setHAlign("left");
+      else setHAlign("center");
+    }
+
     if (group && tokenKey != null) {
       group.setOpenKey(val ? tokenKey : null);
     } else {
       setLocalOpen(val);
     }
   };
+
+  // Dışarı tıklayınca kapat
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (!containerRef.current?.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  // Escape tuşuyla kapat
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [open]);
 
   if (!token.isWord) return <span className="whitespace-pre-wrap">{token.text}</span>;
 
@@ -48,8 +93,9 @@ export function WordToken({ token, tokenKey }: { token: Token; tokenKey?: string
   const morphology = formatMorphology(token.info);
 
   return (
-    <span className="relative inline-block">
+    <span ref={containerRef} className="relative inline-block">
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setOpen(!open)}
         className={cn(
@@ -65,14 +111,18 @@ export function WordToken({ token, tokenKey }: { token: Token; tokenKey?: string
       {open && (
         <span
           className={cn(
-            "absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-20 w-60 rounded-xl border shadow-lg p-3 text-xs",
+            "absolute z-20 w-56 max-w-[calc(100vw-2rem)] rounded-xl border shadow-lg p-3 text-xs",
+            showBelow ? "top-full mt-2" : "bottom-full mb-2",
+            hAlign === "center" && "left-1/2 -translate-x-1/2",
+            hAlign === "left"   && "left-0",
+            hAlign === "right"  && "right-0",
             c.bg, c.border, c.text
           )}
         >
           <button
             type="button"
             aria-label="Kapat"
-            onClick={() => setOpen(false)}
+            onClick={(e) => { e.stopPropagation(); setOpen(false); }}
             className="absolute top-1.5 right-2 opacity-50 hover:opacity-100"
           >
             <X className="w-3 h-3" />
